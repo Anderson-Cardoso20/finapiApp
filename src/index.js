@@ -1,4 +1,4 @@
-const { request } = require('express');
+const { request, response } = require('express');
 const express = require ('express');
 const { v4:uuidv4 } = require ("uuid")
 
@@ -29,7 +29,7 @@ function getBalance(statemet){
         if(operation.type === 'credit'){
             return acc + operation.amount;
         }else {
-            return acc -operation.amount;
+            return acc - operation.amount;
         }
     }, 0);
 
@@ -82,7 +82,7 @@ app.post("/deposit", verifyIfExistsAccountCPF, (request, response)=>{
        const statementOperation = {
            description,
            amount,
-           create_at: new Date(),
+           created_at: new Date(),
            type: "credit"
        } 
        customer.statement.push(statementOperation);
@@ -104,7 +104,7 @@ app.post("/withdraw", verifyIfExistsAccountCPF,(request, response)=>{
 
     const statementOperation = {
         amount,
-        create_ad: new Date(),
+        created_at: new Date(),
         type: "debit",
     };
 
@@ -124,7 +124,7 @@ app.get("/statement/date", verifyIfExistsAccountCPF, (request, response)=>{
     const {date} = request.query;
 
         
-    const dateFormat = new Date(date + "00:00");
+    const dateFormat = new Date(date + " 00:00");
 
     const statement = customer.statement.filter(
     (statement)=>
@@ -137,8 +137,40 @@ app.get("/statement/date", verifyIfExistsAccountCPF, (request, response)=>{
     return response.json(statement);
 
     
-})
+});
 
+app.put("/account", verifyIfExistsAccountCPF,(request, response)=>{
+
+    const {name} =request.body;
+    const {customer} = request;
+
+    customer.name = name;
+
+    return response.status(201).send();
+});
+
+app.get("/account", verifyIfExistsAccountCPF, (request, response)=>{
+    const {customer} = request;
+
+    return response.json(customer);
+});
+
+app.delete("/account", verifyIfExistsAccountCPF,(request, response)=>{
+
+    const {customer} = request;
+    // Para deletar usar metodo splice
+
+    customers.splice(customer, 1);
+
+    return response.status(200).json(customers);
+});
+
+app.get("/balance", verifyIfExistsAccountCPF, (request, response)=>{
+    const {customer} = request;
+    const balance  = getBalance(customer.statement);
+
+    return response.json(balance);
+})
 
 app.listen(3333, (request, response)=>{
     console.log("Server is running on port 3333")
